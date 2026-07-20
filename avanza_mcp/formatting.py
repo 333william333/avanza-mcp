@@ -12,13 +12,15 @@ import datetime as dt
 import decimal
 import enum
 import json
+import sys
 from typing import Any
 
 import requests
-from pydantic import BaseModel
+from pydantic import BaseModel, ValidationError
 
 from .client import AvanzaAuthError, AvanzaConfigError
 from .guard import ReadOnlyViolationError
+from .redaction import redact
 
 __all__ = ["ResponseFormat", "to_plain", "render", "handle_error"]
 
@@ -133,22 +135,46 @@ def render(data: Any, fmt: ResponseFormat, title: str) -> str:
     """
     plain = to_plain(data)
     if fmt is ResponseFormat.JSON:
-        return json.dumps(plain, indent=2, ensure_ascii=False, default=str)
-    if plain is None or plain == [] or plain == {}:
-        return f"# {title}\n\n_No data returned._"
-    return "\n".join([f"# {title}", "", *_render(plain)]).strip()
+        body = json.dumps(plain, indent=2, ensure_ascii=False, default=str)
+    elif plain is None or plain == [] or plain == {}:
+        body = f"# {title}\n\n_No data returned._"
+    else:
+        body = "\n".join([f"# {title}", "", *_render(plain)]).strip()
+    return redact(body)
 
 
 def handle_error(exc: Exception) -> str:
     """Turn an exception into an actionable message for the agent.
 
-    Read-only violations are surfaced verbatim and prominently -- they mean
-    something tried to mutate account state, which should never happen silently.
+    Two rules govern this function, both learned from a real leak found in audit:
+
+    1. **Never interpolate untrusted exception text.** Some exceptions embed the
+       input that caused them -- pydantic's ``ValidationError`` includes
+       ``input_value={...}``, which for a credentials model is the credentials
+       themselves. Only exception types we know to be safe get their message
+       forwarded; everything else yields the type name alone.
+    2. **Redact whatever slips through.** Every return value passes through
+       :func:`~avanza_mcp.redaction.redact` as a backstop.
+
+    Full detail always goes to stderr (also redacted) for debugging. stderr is not
+    part of the MCP stream and is not shown to the model.
     """
+    print(f"[avanza-mcp] {type(exc).__name__}: {redact(str(exc))}", file=sys.stderr)
+
     if isinstance(exc, ReadOnlyViolationError):
-        return f"REFUSED (read-only server): {exc}"
+        # Raised by our own guard with a message we construct -- safe to forward.
+        return redact(f"REFUSED (read-only server): {exc}")
     if isinstance(exc, (AvanzaConfigError, AvanzaAuthError)):
-        return f"Error: {exc}"
+        # Also our own, with deliberately credential-free messages.
+        return redact(f"Error: {exc}")
+    if isinstance(exc, ValidationError):
+        # NEVER forward the message: it embeds input_value, i.e. whatever was
+        # being validated. For a credentials model that is the user's secrets.
+        return (
+            "Error: Internal validation error while building a request. "
+            "Details were written to the server log, not included here because "
+            "validation errors can echo their input."
+        )
     if isinstance(exc, requests.HTTPError):
         status = exc.response.status_code if exc.response is not None else None
         if status == 401:
@@ -173,4 +199,8 @@ def handle_error(exc: Exception) -> str:
             "Error: Could not reach Avanza. Check the container has network access "
             "to www.avanza.se."
         )
-    return f"Error: {type(exc).__name__}: {exc}"
+    # Unknown exception type: the type name is safe, the message is not.
+    return (
+        f"Error: {type(exc).__name__}. Details were written to the server log; "
+        "the message is withheld here because it may echo request data."
+    )

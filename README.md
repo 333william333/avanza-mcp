@@ -5,7 +5,8 @@
 **Läsåtkomst till ditt Avanza-konto för Claude — utan att någonsin kunna handla.**
 
 [![read-only](https://img.shields.io/badge/read--only-enforced-3fb950?style=flat-square)](#hur-read-only-garanteras)
-[![tests](https://img.shields.io/badge/tester-155%20passerar-3fb950?style=flat-square)](#verifierat-inte-antaget)
+[![tests](https://img.shields.io/badge/tester-168%20passerar-3fb950?style=flat-square)](#verifierat-inte-antaget)
+[![audit](https://img.shields.io/badge/granskad-adversariellt-d29922?style=flat-square)](#säkerhetsgranskning)
 [![docker](https://img.shields.io/badge/docker-stdio-388bfd?style=flat-square)](#docker)
 [![python](https://img.shields.io/badge/python-3.12-3776ab?style=flat-square)](pyproject.toml)
 [![secrets](https://img.shields.io/badge/secrets-macOS%20Keychain-bc8cff?style=flat-square)](#säkerhet-kring-credentials)
@@ -18,7 +19,8 @@ Portfölj · innehav · transaktioner · kursdata · orderbok · nyheter · beva
 
 Servern ger Claude 14 läsverktyg mot Avanza. Den **kan inte köpa eller sälja** — och
 det är inte en inställning som går att slå av, utan en egenskap som upprätthålls i
-fyra oberoende lager och verifieras av 155 tester.
+fyra oberoende lager, verifieras av 168 tester och har överlevt en oberoende
+[adversariell granskning](#säkerhetsgranskning).
 
 <div align="center">
   <img src="docs/architecture.svg" alt="Arkitektur: Claude talar MCP över stdio till en Docker-container med MCP-servern och read-only-guarden, som anropar Avanzas API över HTTPS. Skrivoperationer stoppas i guarden." width="100%">
@@ -108,6 +110,34 @@ except ReadOnlyViolationError as e:
     print("Blockerad:", e)
 EOF
 ```
+
+---
+
+## Säkerhetsgranskning
+
+Koden har genomgått en oberoende adversariell granskning vars uppdrag var att
+*bryta* påståendet "kan inte lägga order", inte bekräfta det. Read-only-garantin höll
+— ingen väg förbi hittades. Men granskningen hittade **två riktiga buggar som den
+ursprungliga testsviten var blind för**, båda nu åtgärdade:
+
+| Allvarlighet | Fynd | Åtgärd |
+|---|---|---|
+| **Hög** | Inloggningen fungerade inte alls. Bibliotekets fält är deklarerat `totp_secret: str = Field(..., alias="totpSecret")` utan `populate_by_name`, alltså **alias-only** i pydantic 2. Varje login kastade `ValidationError` innan något nätverksanrop. | Konstruera med `totpSecret=`. Test som faktiskt bygger credentials tillagt. |
+| **Medel** | Det felet **läckte TOTP-seeden till modellen**. Pydantic bäddar in `input_value={...}` i sitt felmeddelande — för en credentials-modell alltså hela hemligheten — och den vidarebefordrades till klienten och därmed in i konversationen. | Undantagstext från otillförlitliga typer vidarebefordras inte längre. Plus [`redaction.py`](avanza_mcp/redaction.py) som skrubbar registrerade värden ur allt utgående. |
+
+Varför testsviten missade dem: `tests/test_server.py` monkeypatchade hela klienten, så
+**inget test byggde någonsin riktiga credentials eller körde en verklig
+inloggningsväg**. 155 tester passerade medan servern inte kunde logga in.
+[`tests/test_credentials.py`](tests/test_credentials.py) täcker nu den luckan.
+
+Två principer styr felhanteringen sedan dess:
+
+1. **Interpolera aldrig otillförlitlig undantagstext.** Vissa undantag bäddar in
+   indatan som orsakade dem. Endast typer vi vet är säkra får sitt meddelande
+   vidarebefordrat; övriga ger typnamnet ensamt. Fullständig detalj går till stderr,
+   som inte är en del av MCP-strömmen.
+2. **Redigera det som ändå slinker igenom.** Användarnamn, lösenord och TOTP-seed
+   registreras vid start och skrubbas ur varje utgående sträng — även stderr.
 
 ---
 
@@ -212,7 +242,7 @@ och biblioteket körs med `quiet=True` plus en `redirect_stdout`-backstop).
 ```bash
 uv venv --python 3.12 .venv
 uv pip install --python .venv/bin/python -e ".[dev]"
-.venv/bin/python -m pytest        # 155 tester
+.venv/bin/python -m pytest        # 168 tester
 ```
 
 ### Vid uppgradering av `avanza-api`
@@ -237,9 +267,11 @@ avanza_mcp/
   client.py        lazy auth, sessionsförnyelse vid 401, thread-offloading
   server.py        14 MCP-verktyg
   formatting.py    serialisering, markdown/JSON-rendering, felhantering
+  redaction.py     skrubbar credentials ur allt utgående (backstop)
 tests/
   test_guard.py    130 tester — kärnan i säkerhetsgarantin
   test_server.py   25 tester — verktygsytan
+  test_credentials.py  läckageskydd och inloggningsväg
 scripts/
   setup-credentials.sh      Keychain-inmatning (interaktivt, en gång)
   avanza-mcp-launcher.sh    det MCP-klienten kör

@@ -199,7 +199,12 @@ async def test_one_failing_section_does_not_sink_the_others(
     result = await server.mcp.call_tool("avanza_get_order_book", {"order_book_id": "5361"})
     text = str(result)
     assert "Volvo B" in text  # the order book section survived
-    assert "no market data" in text  # and the failure is reported, not swallowed
+    # The failure is reported by type, not swallowed. The exception's own message is
+    # deliberately withheld -- an arbitrary exception may quote request data, so only
+    # the type name crosses back to the model. Full detail goes to stderr.
+    assert "error" in text.lower()
+    assert "RuntimeError" in text
+    assert "no market data" not in text
 
 
 async def test_invalid_arguments_are_rejected_by_validation(

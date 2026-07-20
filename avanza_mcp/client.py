@@ -24,8 +24,10 @@ from typing import Any
 import requests
 from avanza import Avanza
 from avanza.credentials import SecretCredentials
+from pydantic import ValidationError
 
 from .guard import ReadOnlyViolationError, harden, verify_hardened
+from .redaction import register_secret
 
 __all__ = ["ReadOnlyAvanzaClient", "AvanzaConfigError", "AvanzaAuthError", "get_client"]
 
@@ -52,20 +54,30 @@ class ReadOnlyAvanzaClient:
         self._client: Avanza | None = None
         self._lock = asyncio.Lock()
 
+        # Backstop: if any of these values ever reaches an outgoing message, it is
+        # scrubbed. The primary control is not interpolating untrusted text at all.
+        for value in (username, password, totp_secret):
+            register_secret(value)
+
     # -- authentication ----------------------------------------------------
 
     def _login(self) -> Avanza:
         """Blocking login. Always run via ``asyncio.to_thread``."""
-        credentials = SecretCredentials(
-            username=self._username,
-            password=self._password,
-            totp_secret=self._totp_secret,
-        )
         # quiet=True stops the library printing to stdout, which would corrupt the
         # MCP stdio stream. redirect_stdout is a backstop in case a future version
         # prints anyway -- anything it emits is forwarded to stderr instead.
         captured = io.StringIO()
         try:
+            # NOTE: the field is declared `totp_secret: str = Field(..., alias="totpSecret")`
+            # with no populate_by_name, so under pydantic 2 it is ALIAS-ONLY. Passing
+            # `totp_secret=` raises ValidationError before any network call -- and that
+            # error embeds input_value, i.e. the credentials. Construction stays inside
+            # this try block so such an error can never escape unwrapped.
+            credentials = SecretCredentials(
+                username=self._username,
+                password=self._password,
+                totpSecret=self._totp_secret,
+            )
             with contextlib.redirect_stdout(captured):
                 client = Avanza(credentials, retry_with_next_otp=True, quiet=True)
         except requests.HTTPError as exc:
@@ -77,8 +89,18 @@ class ReadOnlyAvanzaClient:
                     "scripts/setup-credentials.sh to update them."
                 ) from exc
             raise AvanzaAuthError(f"Login failed with HTTP {status}.") from exc
+        except ValidationError as exc:
+            # Do NOT include the message: pydantic embeds input_value, which for a
+            # credentials model is the username, password and TOTP seed.
+            raise AvanzaConfigError(
+                "Could not build credentials for the Avanza client "
+                f"({exc.error_count()} validation error(s)). This usually means the "
+                "avanza-api version changed its credential model. The details are "
+                "withheld here because validation errors echo their input."
+            ) from None
         except Exception as exc:  # noqa: BLE001 - surfaced to the user as a tool error
-            raise AvanzaAuthError(f"Login failed: {type(exc).__name__}: {exc}") from exc
+            # Type name only. An arbitrary exception's message may quote request data.
+            raise AvanzaAuthError(f"Login failed: {type(exc).__name__}.") from exc
         finally:
             leaked = captured.getvalue()
             if leaked:
