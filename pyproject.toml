@@ -1,0 +1,32 @@
+[project]
+name = "avanza-mcp"
+version = "1.0.0"
+description = "Strictly read-only MCP server for Avanza"
+requires-python = ">=3.11"
+dependencies = [
+    # Pinned deliberately. The read-only guard in avanza_mcp/guard.py encodes this
+    # library's exact route table; an unreviewed upgrade could introduce a new
+    # mutating endpoint. tests/test_guard.py fails if the surface changes.
+    "avanza-api==16.1.0",
+    "mcp>=1.2.0",
+    "pydantic>=2.0",
+    "requests>=2.31",
+]
+
+[project.scripts]
+avanza-mcp = "avanza_mcp.server:main"
+
+[project.optional-dependencies]
+dev = ["pytest>=8.0", "pytest-asyncio>=0.24"]
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["avanza_mcp*"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+filterwarnings = ["ignore::DeprecationWarning"]

@@ -1,0 +1,49 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 430" width="900" height="430" role="img" aria-label="Diagram som visar att HTTP-verbet POST anvands bade for laskningar som slapps igenom och skrivningar som blockeras, vilket motiverar en explicit allowlist.">
+  <rect width="900" height="430" rx="12" fill="#0d1117"/>
+  <rect x="0.5" y="0.5" width="899" height="429" rx="12" fill="none" stroke="#30363d"/>
+
+  <text x="36" y="46" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="20" font-weight="600" fill="#e6edf3">Varför HTTP-verb inte räcker</text>
+  <text x="36" y="70" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#8b949e">Fem av de sex anropen nedan är <tspan font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" fill="#e6edf3">POST</tspan>. Verbet säger ingenting om vad de gör.</text>
+
+  <!-- LEFT: reads -->
+  <rect x="36" y="98" width="404" height="212" rx="10" fill="#0f1c13" stroke="#3fb950"/>
+  <circle cx="60" cy="126" r="9" fill="#3fb950"/>
+  <path d="M 56 126 L 59 129 L 64 123" stroke="#0d1117" stroke-width="2" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="78" y="131" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#3fb950">Läsningar — släpps igenom</text>
+
+  <rect x="54" y="148" width="368" height="44" rx="6" fill="#161b22" stroke="#30363d"/>
+  <text x="68" y="168" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#e6edf3">POST /_api/search/filtered-search</text>
+  <text x="68" y="184" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#8b949e">instrumentsökning</text>
+
+  <rect x="54" y="200" width="368" height="44" rx="6" fill="#161b22" stroke="#30363d"/>
+  <text x="68" y="220" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#e6edf3">POST /_api/account-performance/…/timeperiod</text>
+  <text x="68" y="236" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#8b949e">kontoutveckling över tid</text>
+
+  <rect x="54" y="252" width="368" height="44" rx="6" fill="#161b22" stroke="#30363d"/>
+  <text x="68" y="272" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#e6edf3">GET  /_api/trading-critical/rest/orderbook/…</text>
+  <text x="68" y="288" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#8b949e">orderdjup — ligger under "trading" men är en läsning</text>
+
+  <!-- RIGHT: writes -->
+  <rect x="460" y="98" width="404" height="212" rx="10" fill="#1c1113" stroke="#f85149"/>
+  <circle cx="484" cy="126" r="9" fill="#f85149"/>
+  <path d="M 481 123 L 487 129 M 487 123 L 481 129" stroke="#0d1117" stroke-width="2" stroke-linecap="round"/>
+  <text x="502" y="131" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#f85149">Skrivningar — blockeras</text>
+
+  <rect x="478" y="148" width="368" height="44" rx="6" fill="#161b22" stroke="#30363d"/>
+  <text x="492" y="168" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#e6edf3">POST /_api/trading-critical/rest/order/new</text>
+  <text x="492" y="184" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#8b949e">lägger en order</text>
+
+  <rect x="478" y="200" width="368" height="44" rx="6" fill="#161b22" stroke="#30363d"/>
+  <text x="492" y="220" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#e6edf3">POST /_api/trading-critical/rest/order/delete</text>
+  <text x="492" y="236" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#8b949e">avbryter en order — inte DELETE, utan POST</text>
+
+  <rect x="478" y="252" width="368" height="44" rx="6" fill="#161b22" stroke="#30363d"/>
+  <text x="492" y="272" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#e6edf3">POST /_api/watchlist/watchlist/remove/…</text>
+  <text x="492" y="288" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#8b949e">tar bort från bevakningslista</text>
+
+  <!-- conclusion -->
+  <rect x="36" y="324" width="828" height="84" rx="10" fill="#161b22" stroke="#30363d"/>
+  <text x="56" y="350" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#8b949e">En regel som <tspan fill="#f85149">"blockera alla POST"</tspan> hade både förstört sökfunktionen och släppt igenom orderannullering.</text>
+  <text x="56" y="372" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#8b949e">Sökvägsprefix duger inte heller — <tspan font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#e6edf3">trading-critical/</tspan> innehåller både läsningar och skrivningar.</text>
+  <text x="56" y="394" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#3fb950">Därför: explicit allowlist av (route, verb)-par. Allt annat nekas.</text>
+</svg>

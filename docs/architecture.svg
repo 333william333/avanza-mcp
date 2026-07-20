@@ -1,0 +1,82 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 470" width="900" height="470" role="img" aria-label="Arkitektur: Claude talar MCP over stdio till en Docker-container som innehaller MCP-servern och read-only-guarden, som i sin tur anropar Avanzas API over HTTPS.">
+  <defs>
+    <marker id="arrow" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#58a6ff"/>
+    </marker>
+    <marker id="arrowRed" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M 0 0 L 10 5 L 0 10 z" fill="#f85149"/>
+    </marker>
+  </defs>
+
+  <rect width="900" height="470" rx="12" fill="#0d1117"/>
+  <rect x="0.5" y="0.5" width="899" height="469" rx="12" fill="none" stroke="#30363d"/>
+
+  <text x="36" y="46" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="20" font-weight="600" fill="#e6edf3">Arkitektur</text>
+  <text x="36" y="70" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" fill="#8b949e">Läsningar passerar. Skrivningar tar aldrig sig ut ur containern.</text>
+
+  <!-- Claude -->
+  <rect x="36" y="122" width="146" height="96" rx="10" fill="#161b22" stroke="#30363d"/>
+  <text x="109" y="163" text-anchor="middle" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#e6edf3">Claude</text>
+  <text x="109" y="185" text-anchor="middle" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" fill="#8b949e">MCP-klient</text>
+
+  <!-- arrow 1 -->
+  <line x1="186" y1="170" x2="238" y2="170" stroke="#58a6ff" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="212" y="158" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#58a6ff">stdio</text>
+
+  <!-- Docker container -->
+  <rect x="244" y="98" width="404" height="196" rx="10" fill="#11161d" stroke="#388bfd" stroke-dasharray="5 4"/>
+  <text x="260" y="122" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#58a6ff">docker · read-only · non-root · no-caps</text>
+
+  <rect x="266" y="140" width="160" height="80" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="346" y="172" text-anchor="middle" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#e6edf3">MCP-server</text>
+  <text x="346" y="192" text-anchor="middle" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" fill="#8b949e">14 läsverktyg</text>
+
+  <line x1="430" y1="180" x2="462" y2="180" stroke="#58a6ff" stroke-width="2" marker-end="url(#arrow)"/>
+
+  <rect x="466" y="140" width="160" height="80" rx="8" fill="#161b22" stroke="#3fb950"/>
+  <text x="546" y="166" text-anchor="middle" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="14" font-weight="600" fill="#3fb950">Guard</text>
+  <text x="546" y="186" text-anchor="middle" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#8b949e">allowlist, default-deny</text>
+  <text x="546" y="203" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#8b949e">27 (route, verb)-par</text>
+
+  <!-- arrow to Avanza -->
+  <line x1="652" y1="180" x2="708" y2="180" stroke="#58a6ff" stroke-width="2" marker-end="url(#arrow)"/>
+  <text x="680" y="168" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#58a6ff">https</text>
+
+  <!-- Avanza -->
+  <rect x="712" y="122" width="152" height="96" rx="10" fill="#161b22" stroke="#30363d"/>
+  <text x="788" y="157" text-anchor="middle" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="15" font-weight="600" fill="#e6edf3">Avanza</text>
+  <text x="788" y="177" text-anchor="middle" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="12" fill="#8b949e">inofficiellt API</text>
+  <text x="788" y="196" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="10" fill="#8b949e">avanza-api 16.1.0</text>
+
+  <!-- blocked write path -->
+  <line x1="546" y1="224" x2="546" y2="258" stroke="#f85149" stroke-width="2" stroke-dasharray="4 3" marker-end="url(#arrowRed)"/>
+  <rect x="358" y="258" width="376" height="30" rx="6" fill="#2d1113" stroke="#f85149"/>
+  <text x="546" y="278" text-anchor="middle" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#f85149">place_order · delete_order · buy_fund → stoppas här</text>
+
+  <!-- layers strip -->
+  <text x="36" y="336" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#8b949e">FYRA LAGER</text>
+
+  <rect x="36" y="352" width="196" height="82" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="52" y="376" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#3fb950">L1</text>
+  <text x="76" y="376" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#e6edf3">Route-allowlist</text>
+  <text x="52" y="398" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#8b949e">Vid HTTP-flaskhalsen.</text>
+  <text x="52" y="415" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#8b949e">Ankrad regex, default-deny.</text>
+
+  <rect x="246" y="352" width="196" height="82" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="262" y="376" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#3fb950">L2</text>
+  <text x="286" y="376" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#e6edf3">Metodblockering</text>
+  <text x="262" y="398" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#8b949e">15 muterande metoder.</text>
+  <text x="262" y="415" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#8b949e">Okända: fail-closed.</text>
+
+  <rect x="456" y="352" width="196" height="82" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="472" y="376" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#3fb950">L3</text>
+  <text x="496" y="376" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#e6edf3">Ingen skrivyta</text>
+  <text x="472" y="398" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#8b949e">Inget verktyg mappar mot</text>
+  <text x="472" y="415" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#8b949e">en skrivoperation.</text>
+
+  <rect x="666" y="352" width="198" height="82" rx="8" fill="#161b22" stroke="#30363d"/>
+  <text x="682" y="376" font-family="ui-monospace, SFMono-Regular, Menlo, Consolas, monospace" font-size="11" fill="#3fb950">L4</text>
+  <text x="706" y="376" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="13" font-weight="600" fill="#e6edf3">Container</text>
+  <text x="682" y="398" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#8b949e">read-only rootfs, uid 10001,</text>
+  <text x="682" y="415" font-family="ui-sans-serif, -apple-system, BlinkMacSystemFont, 'Segoe UI', Helvetica, Arial, sans-serif" font-size="11" fill="#8b949e">cap-drop ALL, ingen port.</text>
+</svg>
